@@ -1,0 +1,49 @@
+<?php
+?><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Adas - Daily summary</title>
+    <!-- CSS -->
+    <link href='//fonts.googleapis.com/css?family=Ubuntu:400,700' rel='stylesheet' type='text/css'>
+    <link href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="container">
+        <div class="page-header">
+            <h1>Adas - Daily summary</h1>
+        </div>
+    </header>
+    <main class="container">
+        <?php
+        while ($row = $this->result->fetch_assoc()) {
+            ?>
+            <div class="card list-group-item ns ns-<?=$row['rc_namespace']?>">
+                <h4 class="list-group-item-heading link">
+                    <a href="https://id.wikipedia.org/wiki/<?=$row['rc_title']?>"><?=$row['rc_title'];?></a>
+                </h4>
+                <div class="list-group-item-text time">
+                    <?=$row['timestamps'];?>
+                </div>
+                <div class="list-group-item-text user">
+                    <?=$row['users'];?>
+                </div>
+                <div class="list-group-item-text info">
+                    <?=var_dump($row);?>
+                </div>
+            </div>
+            <?php
+        };
+        ?>
+    </main>
+    <footer>
+        <div class="container"> 
+            &copy; <?php echo date("Y"); ?> Adas
+        </div>
+    </footer>
+    <script src="//tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
+    <script src="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</body>
+</html>
