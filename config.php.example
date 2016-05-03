@@ -1,6 +1,8 @@
 <?php
-$db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';
-$db_name = '';
-$db_port = 3306;
+$config['db_host'] = 'localhost';
+$config['db_user'] = 'root';
+$config['db_pass'] = '';
+$config['db_name'] = '';
+$config['db_port'] = 3306;
+$config['utils_userAgent'] = "Kenrick Tool/adas";
+$config['utils_cookieFile'] = "cookies.tmp";

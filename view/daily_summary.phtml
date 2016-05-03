@@ -9,6 +9,7 @@
     <!-- CSS -->
     <link href='//fonts.googleapis.com/css?family=Ubuntu:400,700' rel='stylesheet' type='text/css'>
     <link href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <link href='//tools.wmflabs.org/raun/css/style.css' rel='stylesheet' type='text/css'> <!-- super lazy custom style declaration :P -->
 </head>
 <body>
     <header class="container">
@@ -22,13 +23,13 @@
             ?>
             <div class="card list-group-item ns ns-<?=$row['rc_namespace']?>">
                 <h4 class="list-group-item-heading link">
-                    <a href="https://id.wikipedia.org/wiki/<?=$row['rc_title']?>"><?=$row['rc_title'];?></a>
+                    <a href="https://id.wikipedia.org/wiki/<?=$this->ns[$row['rc_namespace']]?><?=$row['rc_title']?>"><?=$this->ns[$row['rc_namespace']]?><?=$row['rc_title'];?></a>
                 </h4>
                 <div class="list-group-item-text time">
                     <?=$row['timestamps'];?>
                 </div>
                 <div class="list-group-item-text user">
-                    <?=$row['users'];?>
+                    <!-- User: <?=$this->ns[2]?> --><?=$row['users'];?>
                 </div>
                 <div class="list-group-item-text info">
                     <?=var_dump($row);?>

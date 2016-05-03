@@ -1,11 +1,11 @@
 <?php
-$this->respond('GET', '/?', function ($request, $response, $service, $app) {
+$this->respond('GET', '/[s:date]', function ($request, $response, $service, $app) {
     $mysqli = $app->db;
 
-    $time = strtotime($request->param('date'));
+    $time = strtotime($request->date);
 
     if (!$time)
-        return "Invalid date";
+        return "Invalid date: " . var_dump($time);
 
     function pad($num) {
         if ($num < 10)
@@ -13,8 +13,8 @@ $this->respond('GET', '/?', function ($request, $response, $service, $app) {
         return strval($num);
     }
 
-    $query_date_min = date("Ymd", $time);
-    $query_date_max = date("Ymd", $time + 24 * 3600);
+    $query_date_min = date("Ymd", $time) . "000000";
+    $query_date_max = date("Ymd", $time + 24 * 3600) . "000000";
 
     $query = "SELECT
         rc_namespace,
@@ -35,5 +35,19 @@ $this->respond('GET', '/?', function ($request, $response, $service, $app) {
 
     $result = $mysqli->query($query);
 
-    $service->render('view/daily_summary.phtml', array('result' => $result));
+    require_once("utils.php");
+    $namespaces = json_decode(http_request("https://id.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces&format=json"), true);
+    $namespaces = $namespaces['query']['namespaces'];
+
+    $ns = array();
+    foreach ($namespaces as $k => $v) {
+        $ns[$k] = $v['*'];
+        if ($k !== 0)
+            $ns[$k] .= ":";
+    }
+    // var_dump($ns);
+    // 
+    // TODO: integrate with https://ores.wmflabs.org/scores/idwiki/reverted/ <diff_id> /
+
+    $service->render('view/daily_summary.phtml', array('result' => $result, 'ns' => $ns));
 });
