@@ -59,7 +59,7 @@ footer {
                         ?><a href="https://id.wikipedia.org/wiki/Special:Diff/<?= $revision['diff'] ?>"><?php
 
                         }
-                            echo date("H:i:s", $revision['timestamp']);
+                            echo join(':', str_split(substr($revision['timestamp'], 8), 2));
                         if ($revision['diff'] > 0) {
                             echo "</a>";
                         }
@@ -81,7 +81,7 @@ footer {
     </main>
     <nav class="container">
         <ul class="pagination">
-        <?php for ($i = 1; $i <= ceil($this->num_found / 50); $i++) {?>
+        <?php for ($i = 1; $i <= ceil($this->num_found / 100); $i++) {?>
             <li<?php if ($i == $this->page_num + 1) { echo " class='active'"; } ?>><a href="<?= $i ?>"><?= $i ?></a></li>
         <?php } ?>
         </ul>

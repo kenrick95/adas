@@ -5,6 +5,8 @@ $this->respond('GET', '/[s:date]', function ($request, $response, $service, $app
 $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $service, $app) {
     $mysqli = $app->db;
     $page_num = max(intval($request->page_num) - 1, 0);
+    $offset_rows = $page_num * 100;
+    
     $time = strtotime($request->date);
 
     if (!$time)
@@ -37,8 +39,8 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
         0 <= rc_type AND rc_type <= 4 AND 
         rc_timestamp >= $query_date_min AND rc_timestamp < $query_date_max
     GROUP BY rc_namespace, rc_title
-    ORDER BY rc_timestamp DESC
-    LIMIT $page_num, 100;";
+    ORDER BY MAX(rc_timestamp) DESC
+    LIMIT $offset_rows, 100;";
 
     $query .= "SELECT FOUND_ROWS();";
 
