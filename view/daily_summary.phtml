@@ -10,6 +10,22 @@
     <link href='//fonts.googleapis.com/css?family=Ubuntu:400,700' rel='stylesheet' type='text/css'>
     <link href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <link href='//tools.wmflabs.org/raun/css/style.css' rel='stylesheet' type='text/css'> <!-- super lazy custom style declaration :P -->
+    <style>
+.list-group-item-text.item-rev {
+    display:flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+.list-group-item-text .item-time,
+.list-group-item-text .item-user,
+.list-group-item-text .item-score,
+.list-group-item-text .item-type,
+.list-group-item-text .item-action {
+    flex: 0 1 200px;
+
+}
+
+    </style>
 </head>
 <body>
     <header class="container">
@@ -19,21 +35,35 @@
     </header>
     <main class="container">
         <?php
-        while ($row = $this->result->fetch_assoc()) {
+        foreach ($this->data as $row) {
             ?>
-            <div class="card list-group-item ns ns-<?=$row['rc_namespace']?>">
+            <div class="card list-group-item ns ns-<?=$row['ns']?>">
                 <h4 class="list-group-item-heading link">
-                    <a href="https://id.wikipedia.org/wiki/<?=$this->ns[$row['rc_namespace']]?><?=$row['rc_title']?>"><?=$this->ns[$row['rc_namespace']]?><?=$row['rc_title'];?></a>
+                    <a href="https://id.wikipedia.org/wiki/<?=$row['title']?>"><?= $row['title'];?></a>
                 </h4>
-                <div class="list-group-item-text time">
-                    <?=$row['timestamps'];?>
+                <?php 
+                foreach ($row['revisions'] as $revision) {
+                    ?>
+                <div class="list-group-item-text item-rev">
+                    <div class="item-time"><span class="glyphicon glyphicon-time"></span> <?php
+                        if ($revision['diff'] > 0) {
+
+                        ?><a href="https://id.wikipedia.org/wiki/Special:Diff/<?= $revision['diff'] ?>"><?php
+
+                        }
+                            echo date("H:i:s", $revision['timestamp']);
+                        if ($revision['diff'] > 0) {
+                            echo "</a>";
+                        }
+                            ?></div>
+                    <div class="item-user"><span class="glyphicon glyphicon-user"></span> <a href="https://id.wikipedia.org/wiki/Special:Contributions/<?= $revision['user'] ?>"><?= $revision['user'] ?></a></div>
+                    <div class="item-score"><?php if (strlen($revision['diff_score']) > 0) { ?><span class="glyphicon glyphicon-fire"></span> <?= $revision['diff_score'] ?>% <?php } ?>(<?= $revision['type'] ?>)</div>
+                    <div class="item-type"><?= $revision['log_type'] ?></div>
+                    <div class="item-action"><?= $revision['log_action'] ?></div>
                 </div>
-                <div class="list-group-item-text user">
-                    <!-- User: <?=$this->ns[2]?> --><?=$row['users'];?>
-                </div>
-                <div class="list-group-item-text info">
-                    <?=var_dump($row);?>
-                </div>
+                    <?php
+                }
+                ?>
             </div>
             <?php
         };
