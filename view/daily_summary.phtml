@@ -22,10 +22,10 @@
 .list-group-item-text .item-score,
 .list-group-item-text .item-log-type,
 .list-group-item-text .item-log-action {
-    flex: 0 1 200px;
+    flex: 0 1 150px;
 }
 .list-group-item-text .item-user {
-    flex: 0 1 300px;
+    flex: 0 1 350px;
 }
 footer {
     margin-top: 50px;
@@ -50,7 +50,9 @@ footer {
                 <?php 
                 foreach ($row['revisions'] as $revision) {
                     ?>
-                <div class="list-group-item-text item-rev item-type-<?= $revision['type'] ?>">
+                <div class="list-group-item-text item-rev item-type-<?= $revision['type'] ?>"<?php if (strlen($revision['diff_score']) > 0) {
+                        ?>style="background-color: hsla(0, <?= 50 + round(log10(100 - $revision['diff_score']) * 25) ?>%, <?= 50 + round(log10(100 - $revision['diff_score']) * 25) ?>%, 1);"<?php }
+                        ?>>
                     <div class="item-time"><span class="glyphicon glyphicon-time"></span> <?php
                         if ($revision['diff'] > 0) {
 
@@ -63,7 +65,9 @@ footer {
                         }
                             ?></div>
                     <div class="item-user"><span class="glyphicon glyphicon-user"></span> <a href="https://id.wikipedia.org/wiki/Special:Contributions/<?= $revision['user'] ?>"><?= $revision['user'] ?></a></div>
-                    <div class="item-score"><?php if (strlen($revision['diff_score']) > 0) { ?><span class="glyphicon glyphicon-fire"></span> <?= $revision['diff_score'] ?>% <?php } ?></div>
+                    <div class="item-score"><?php if (strlen($revision['diff_score']) > 0) {
+                        ?><span class="glyphicon glyphicon-fire"></span> <?= $revision['diff_score'] ?>%<?php }
+                        ?></div>
                     <div class="item-log-type"><?= $revision['log_type'] ?></div>
                     <div class="item-log-action"><?= $revision['log_action'] ?></div>
                 </div>
