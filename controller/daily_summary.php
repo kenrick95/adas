@@ -1,7 +1,10 @@
 <?php
 $this->respond('GET', '/[s:date]', function ($request, $response, $service, $app) {
+    return $response->redirect($service->base_url . "/daily_summary/" . $request->date . "/1");
+});
+$this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $service, $app) {
     $mysqli = $app->db;
-
+    $page_num = max(intval($request->page_num) - 1, 0);
     $time = strtotime($request->date);
 
     if (!$time)
@@ -12,11 +15,12 @@ $this->respond('GET', '/[s:date]', function ($request, $response, $service, $app
             return "0" . strval($num);
         return strval($num);
     }
+    require_once("utils.php");
 
     $query_date_min = date("Ymd", $time) . "000000";
     $query_date_max = date("Ymd", $time + 24 * 3600) . "000000";
 
-    $query = "SELECT
+    $query = "SELECT SQL_CALC_FOUND_ROWS
         rc_namespace,
         rc_title,
         rc_cur_id,
@@ -34,11 +38,14 @@ $this->respond('GET', '/[s:date]', function ($request, $response, $service, $app
         rc_timestamp >= $query_date_min AND rc_timestamp < $query_date_max
     GROUP BY rc_namespace, rc_title
     ORDER BY rc_timestamp DESC
-    LIMIT 0, 100;";
+    LIMIT $page_num, 100;";
 
-    $result = $mysqli->query($query);
+    $query .= "SELECT FOUND_ROWS();";
 
-    require_once("utils.php");
+
+    $mysqli->multi_query($query);
+    // dat long SQL
+    $result = $mysqli->store_result();
     $namespaces = json_decode(http_request("https://id.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces&format=json"), true);
     $namespaces = $namespaces['query']['namespaces'];
 
@@ -65,6 +72,7 @@ $this->respond('GET', '/[s:date]', function ($request, $response, $service, $app
         $datum['log_actions'] = explode(',', $row['log_actions']);
 
         $datum['revisions'] = array();
+        $k = 0;
         for ($i = 0; $i < count($datum['timestamps']); $i++) {
             array_push($datum['revisions'], array(
                 'timestamp' => $datum['timestamps'][$i],
@@ -72,14 +80,27 @@ $this->respond('GET', '/[s:date]', function ($request, $response, $service, $app
                 'diff' => $datum['diffs'][$i],
                 'prev_diff' => $datum['prev_diffs'][$i],
                 'type' => $datum['types'][$i],
-                'log_type' => (strlen($datum['log_actions'][$i]) > 0) ? $datum['log_types'][$i] : '',
+                'log_type' => (strlen($datum['log_actions'][$i]) > 0) ? $datum['log_types'][$k] : '',
                 'log_action' => $datum['log_actions'][$i],
                 'diff_score' => ''
             ));
+
+            if (strlen($datum['log_actions'][$i]) > 0) {
+                $k++;
+            }
         }
 
         array_push($data, $datum);
     };
+
+
+
+    // found_rows
+    $mysqli->next_result();
+    $result = $mysqli->store_result();
+    $row = $result->fetch_row();
+    $num_found = $row[0];
+
 
     function ores(&$data, $i) {
         $url = "https://ores.wmflabs.org/v2/scores/idwiki/reverted/?revids=";
@@ -135,13 +156,7 @@ $this->respond('GET', '/[s:date]', function ($request, $response, $service, $app
         $x++;
     } while(ores($data, $x));
 
-
-    // var_dump($ns);
-    // 
-    // TODO: integrate with https://ores.wmflabs.org/v2/scores/idwiki/reverted/?revids=123456|123457|123458
-    //  <diff_id> /
-    // 
     // https://id.wikipedia.org/w/api.php?action=sitematrix
 
-    $service->render('view/daily_summary.phtml', array('data' => $data, 'ns' => $ns));
+    $service->render('view/daily_summary.phtml', array('data' => $data, 'page_num' => $page_num, 'num_found' => $num_found, 'ns' => $ns));
 });

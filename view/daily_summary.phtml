@@ -16,13 +16,19 @@
     flex-direction: row;
     flex-wrap: wrap;
 }
-.list-group-item-text .item-time,
-.list-group-item-text .item-user,
+.list-group-item-text .item-time {
+    flex: 0 1 100px;
+}
 .list-group-item-text .item-score,
-.list-group-item-text .item-type,
-.list-group-item-text .item-action {
+.list-group-item-text .item-log-type,
+.list-group-item-text .item-log-action {
     flex: 0 1 200px;
-
+}
+.list-group-item-text .item-user {
+    flex: 0 1 300px;
+}
+footer {
+    margin-top: 50px;
 }
 
     </style>
@@ -44,7 +50,7 @@
                 <?php 
                 foreach ($row['revisions'] as $revision) {
                     ?>
-                <div class="list-group-item-text item-rev">
+                <div class="list-group-item-text item-rev item-type-<?= $revision['type'] ?>">
                     <div class="item-time"><span class="glyphicon glyphicon-time"></span> <?php
                         if ($revision['diff'] > 0) {
 
@@ -57,9 +63,9 @@
                         }
                             ?></div>
                     <div class="item-user"><span class="glyphicon glyphicon-user"></span> <a href="https://id.wikipedia.org/wiki/Special:Contributions/<?= $revision['user'] ?>"><?= $revision['user'] ?></a></div>
-                    <div class="item-score"><?php if (strlen($revision['diff_score']) > 0) { ?><span class="glyphicon glyphicon-fire"></span> <?= $revision['diff_score'] ?>% <?php } ?>(<?= $revision['type'] ?>)</div>
-                    <div class="item-type"><?= $revision['log_type'] ?></div>
-                    <div class="item-action"><?= $revision['log_action'] ?></div>
+                    <div class="item-score"><?php if (strlen($revision['diff_score']) > 0) { ?><span class="glyphicon glyphicon-fire"></span> <?= $revision['diff_score'] ?>% <?php } ?></div>
+                    <div class="item-log-type"><?= $revision['log_type'] ?></div>
+                    <div class="item-log-action"><?= $revision['log_action'] ?></div>
                 </div>
                     <?php
                 }
@@ -69,6 +75,13 @@
         };
         ?>
     </main>
+    <nav class="container">
+        <ul class="pagination">
+        <?php for ($i = 1; $i <= ceil($this->num_found / 50); $i++) {?>
+            <li<?php if ($i == $this->page_num + 1) { echo " class='active'"; } ?>><a href="<?= $i ?>"><?= $i ?></a></li>
+        <?php } ?>
+        </ul>
+    </nav>
     <footer>
         <div class="container"> 
             &copy; <?php echo date("Y"); ?> Adas

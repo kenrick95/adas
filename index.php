@@ -20,7 +20,10 @@ $klein->respond(function ($request, $response, $service, $app) use ($klein) {
         global $config;
         return new mysqli($config['db_host'], $config['db_user'], $config['db_pass'], $config['db_name'], $config['db_port']);
     });
+    global $base;
+    $service->base_url = $base;
 });
+
 
 $klein->with("/daily_summary", "controller/daily_summary.php");
 $klein->with("", "controller/home.php");
