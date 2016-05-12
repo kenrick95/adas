@@ -26,6 +26,7 @@ $klein->respond(function ($request, $response, $service, $app) use ($klein) {
 
 
 $klein->with("/daily_summary", "controller/daily_summary.php");
+$klein->with("/daily_article", "controller/daily_article.php");
 $klein->with("", "controller/home.php");
 
 $klein->dispatch();

@@ -1,0 +1,97 @@
+<?php
+?><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Adas - Daily article</title>
+    <!-- CSS -->
+    <link href='//fonts.googleapis.com/css?family=Ubuntu:400,700' rel='stylesheet' type='text/css'>
+    <link href="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <link href='//tools.wmflabs.org/raun/css/style.css' rel='stylesheet' type='text/css'> <!-- super lazy custom style declaration :P -->
+    <style>
+.list-group-item-text.item-rev {
+    display:flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+.list-group-item-text .item-time {
+    flex: 0 1 100px;
+}
+.list-group-item-text .item-score,
+.list-group-item-text .item-log-type,
+.list-group-item-text .item-log-action {
+    flex: 0 1 150px;
+}
+.list-group-item-text .item-user {
+    flex: 0 1 350px;
+}
+footer {
+    margin-top: 50px;
+}
+
+    </style>
+</head>
+<body>
+    <header class="container">
+        <div class="page-header">
+            <h1>Adas - Daily article</h1>
+        </div>
+    </header>
+    <main class="container">
+        <?php
+        foreach ($this->data as $row) {
+            ?>
+            <div class="card list-group-item ns ns-<?=$row['ns']?>">
+                <h4 class="list-group-item-heading link">
+                    <a href="https://id.wikipedia.org/wiki/<?=$row['title']?>"><?= $row['title'];?></a>
+                </h4>
+                <?php 
+                foreach ($row['revisions'] as $revision) {
+                    ?>
+                <div class="list-group-item-text item-rev item-type-<?= $revision['type'] ?>"<?php if (strlen($revision['diff_score']) > 0) {
+                        ?>style="background-color: hsla(0, <?= 50 + round(log10(100 - $revision['diff_score']) * 25) ?>%, <?= 50 + round(log10(100 - $revision['diff_score']) * 25) ?>%, 1);"<?php }
+                        ?>>
+                    <div class="item-time"><span class="glyphicon glyphicon-time"></span> <?php
+                        if ($revision['diff'] > 0) {
+
+                        ?><a href="https://id.wikipedia.org/wiki/Special:Diff/<?= $revision['diff'] ?>"><?php
+
+                        }
+                            echo join(':', str_split(substr($revision['timestamp'], 8), 2));
+                        if ($revision['diff'] > 0) {
+                            echo "</a>";
+                        }
+                            ?></div>
+                    <div class="item-user"><span class="glyphicon glyphicon-user"></span> <a href="https://id.wikipedia.org/wiki/Special:Contributions/<?= $revision['user'] ?>"><?= $revision['user'] ?></a></div>
+                    <div class="item-score"><?php if (strlen($revision['diff_score']) > 0) {
+                        ?><span class="glyphicon glyphicon-fire"></span> <?= $revision['diff_score'] ?>%<?php }
+                        ?></div>
+                    <div class="item-log-type"><?= $revision['log_type'] ?></div>
+                    <div class="item-log-action"><?= $revision['log_action'] ?></div>
+                </div>
+                    <?php
+                }
+                ?>
+            </div>
+            <?php
+        };
+        ?>
+    </main>
+    <nav class="container">
+        <ul class="pagination">
+        <?php for ($i = 1; $i <= ceil($this->num_found / 100); $i++) {?>
+            <li<?php if ($i == $this->page_num + 1) { echo " class='active'"; } ?>><a href="<?= $i ?>"><?= $i ?></a></li>
+        <?php } ?>
+        </ul>
+    </nav>
+    <footer>
+        <div class="container"> 
+            &copy; <?php echo date("Y"); ?> Adas
+        </div>
+    </footer>
+    <script src="//tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
+    <script src="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</body>
+</html>

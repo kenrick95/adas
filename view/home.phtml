@@ -53,12 +53,12 @@
             defaultViewDate: { year: curDate.getUTCFullYear(), month: curDate.getUTCMonth(), day: curDate.getUTCDate() }
         });
         $("#submit").click(function () {
-            $('#form').attr('action', 'daily_summary/' + $('#date').val());
+            $('#form').attr('action', 'daily_article/' + $('#date').val());
             $('#form').submit();
         });
         $("#form").submit(function (e) {
             if ($("#form").attr("action").indexOf("/") < 0) {
-                $('#form').attr('action', 'daily_summary/' + $('#date').val());
+                $('#form').attr('action', 'daily_article/' + $('#date').val());
             }
             
         });
