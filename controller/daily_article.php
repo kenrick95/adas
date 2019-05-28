@@ -51,7 +51,7 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
         actor_id, actor_name
     FROM actor
     INNER JOIN
-        (SELECT DISTINCT 
+        (SELECT
           rc_actor
           FROM recentchanges
           WHERE
@@ -63,7 +63,7 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
           ORDER BY MAX(rc_timestamp) DESC
           LIMIT $offset_rows, 100) as rc
         ON rc.rc_actor = actor.actor_id
-    LIMIT $offset_rows, 100;";
+    LIMIT 0, 100;";
 
 
     $mysqli->multi_query($query);
