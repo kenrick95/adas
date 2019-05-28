@@ -6,13 +6,14 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
     $mysqli = $app->db;
     $page_num = max(intval($request->page_num) - 1, 0);
     $offset_rows = $page_num * 100;
-    
+
     $time = strtotime($request->date);
 
     if (!$time)
         return "Invalid date: " . var_dump($time);
 
-    function pad($num) {
+    function pad($num)
+    {
         if ($num < 10)
             return "0" . strval($num);
         return strval($num);
@@ -30,7 +31,7 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
         GROUP_CONCAT(rc_log_action) AS log_actions,
         GROUP_CONCAT(rc_type) AS types, 
         GROUP_CONCAT(rc_timestamp) AS timestamps, 
-        GROUP_CONCAT(rc_user_text) AS users,
+        GROUP_CONCAT(rc_actor) AS actors,
         GROUP_CONCAT(rc_this_oldid) AS diffs,
         GROUP_CONCAT(rc_last_oldid) AS prev_diffs
     FROM recentchanges
@@ -44,6 +45,25 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
     LIMIT $offset_rows, 100;";
 
     $query .= "SELECT FOUND_ROWS();";
+
+    // Query all the actor_ids found in query #1
+    $query .= "SELECT
+        actor_id, actor_name
+    FROM actor
+    INNER JOIN
+        (SELECT DISTINCT 
+          rc_actor
+          FROM recentchanges
+          WHERE
+              rc_bot = 0 AND /* exclude bots */
+              0 <= rc_type AND rc_type <= 4 AND 
+                rc_timestamp >= $query_date_min AND rc_timestamp < $query_date_max
+          GROUP BY rc_namespace, rc_title
+          HAVING LOCATE('1', GROUP_CONCAT(rc_type)) > 0
+          ORDER BY MAX(rc_timestamp) DESC
+          LIMIT $offset_rows, 100) as rc
+        ON rc.rc_actor = actor.actor_id
+    LIMIT $offset_rows, 100;";
 
 
     $mysqli->multi_query($query);
@@ -67,7 +87,7 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
         $datum['title'] = $ns[$datum['ns']] . $row['rc_title'];
 
         $datum['timestamps'] = explode(',', $row['timestamps']);
-        $datum['users'] = explode(',', $row['users']);
+        $datum['actors'] = explode(',', $row['actors']);
         $datum['diffs'] = explode(',', $row['diffs']);
         $datum['prev_diffs'] = explode(',', $row['prev_diffs']);
         $datum['types'] = explode(',', $row['types']);
@@ -79,7 +99,7 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
         for ($i = 0; $i < count($datum['timestamps']); $i++) {
             array_push($datum['revisions'], array(
                 'timestamp' => $datum['timestamps'][$i],
-                'user' => $datum['users'][$i],
+                'actor' => $datum['actors'][$i],
                 'diff' => $datum['diffs'][$i],
                 'prev_diff' => $datum['prev_diffs'][$i],
                 'type' => $datum['types'][$i],
@@ -104,14 +124,24 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
     $row = $result->fetch_row();
     $num_found = $row[0];
 
+    // Mapping of actor_id -> actor_name
+    $mysqli->next_result();
+    $result = $mysqli->store_result();
+    $actor_map = array();
+    while ($row = $result->fetch_assoc()) {
+        $actor_map[$row['actor_id']] = $row['actor_name'];
+    };
 
-    function ores(&$data, $i) {
-        $url = "https://ores.wmflabs.org/v2/scores/idwiki/reverted/?revids=";
-        $cnt = 0; $limit = 50; $start = $limit * $i;
+    function ores(&$data, $i)
+    {
+        $url = "https://ores.wikimedia.org/v3/scores/idwiki/?models=reverted&revids=";
+        $cnt = 0;
+        $limit = 100;
+        $start = $limit * $i;
         $check = [];
         $more = false;
         foreach ($data as $row) {
-            foreach($row['revisions'] as $revision) {
+            foreach ($row['revisions'] as $revision) {
                 if ($revision['type'] < 3) {
                     if ($cnt >= $start) {
                         array_push($check, $revision['diff']);
@@ -130,15 +160,14 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
 
 
         $ores_result = json_decode(http_request($url . implode("|", $check)), true);
-        $ores_result = $ores_result['scores']['idwiki']['reverted']['scores'];
-        // var_dump($ores_result);
+        $ores_result = $ores_result['idwiki']['scores'];
 
         $cnt = 0;
         foreach ($data as &$row) {
-            foreach($row['revisions'] as &$revision) {
+            foreach ($row['revisions'] as &$revision) {
                 if ($revision['type'] < 3) {
                     if ($cnt >= $start) {
-                        $revision['diff_score'] = round($ores_result[$revision['diff']]['probability']['true'] * 100);
+                        $revision['diff_score'] = round($ores_result[$revision['diff']]['reverted']['score']['probability']['true'] * 100);
                         //var_dump($revision);
                     }
                     $cnt++;
@@ -157,9 +186,18 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
     $x = -1;
     do {
         $x++;
-    } while(ores($data, $x));
+    } while (ores($data, $x));
 
     // https://id.wikipedia.org/w/api.php?action=sitematrix
 
-    $service->render('view/daily_summary.phtml', array('data' => $data, 'page_num' => $page_num, 'num_found' => $num_found, 'ns' => $ns));
+    $service->render(
+        'view/daily_article.phtml',
+        array(
+            'data' => $data,
+            'page_num' => $page_num,
+            'num_found' => $num_found,
+            'ns' => $ns,
+            'actor_map' => $actor_map
+        )
+    );
 });

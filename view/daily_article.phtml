@@ -64,7 +64,7 @@ footer {
                             echo "</a>";
                         }
                             ?></div>
-                    <div class="item-user"><span class="glyphicon glyphicon-user"></span> <a href="https://id.wikipedia.org/wiki/Special:Contributions/<?= $revision['user'] ?>"><?= $revision['user'] ?></a></div>
+                    <div class="item-user"><span class="glyphicon glyphicon-user"></span> <a href="https://id.wikipedia.org/wiki/Special:Contributions/<?= $this->actor_map[$revision['actor']] ?>"><?= $this->actor_map[$revision['actor']] ?></a></div>
                     <div class="item-score"><?php if (strlen($revision['diff_score']) > 0) {
                         ?><span class="glyphicon glyphicon-fire"></span> <?= $revision['diff_score'] ?>%<?php }
                         ?></div>
@@ -92,6 +92,6 @@ footer {
         </div>
     </footer>
     <script src="//tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
-    <script src="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </body>
 </html>
