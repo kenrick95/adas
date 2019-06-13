@@ -1,9 +1,18 @@
 <?php
-$this->respond('GET', '/[s:date]', function ($request, $response, $service, $app) {
-    return $response->redirect($service->base_url . "/daily_article/" . $request->date . "/1");
+$this->respond('GET', '/[s:db_name]', function ($request, $response, $service, $app) {
+    return $response->redirect($service->base_url);
 });
-$this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $service, $app) {
-    $mysqli = $app->db;
+$this->respond('GET', '/[s:db_name]/[s:date]', function ($request, $response, $service, $app) {
+    return $response->redirect($service->base_url);
+});
+$this->respond('GET', '/[s:db_name]/[s:date]/[i:page_num]', function ($request, $response, $service, $app) {
+    $http_request = $service->http_request;
+
+    $db_name = $request->db_name;
+    if (empty($db_name)) {
+        $db_name = 'idwiki';
+    }
+    $mysqli = $app->db()($db_name);
     $page_num = max(intval($request->page_num) - 1, 0);
     $offset_rows = $page_num * 100;
 
@@ -18,7 +27,6 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
             return "0" . strval($num);
         return strval($num);
     }
-    require_once("utils.php");
 
     $query_date_min = date("Ymd", $time) . "000000";
     $query_date_max = date("Ymd", $time + 24 * 3600) . "000000";
@@ -69,7 +77,7 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
     $mysqli->multi_query($query);
     // dat long SQL
     $result = $mysqli->store_result();
-    $namespaces = json_decode(http_request("https://id.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces&format=json"), true);
+    $namespaces = json_decode($http_request("https://id.wikipedia.org/w/api.php?action=query&meta=siteinfo&siprop=namespaces&format=json"), true);
     $namespaces = $namespaces['query']['namespaces'];
 
     $ns = array();
@@ -132,8 +140,14 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
         $actor_map[$row['actor_id']] = $row['actor_name'];
     };
 
-    function ores(&$data, $i)
-    {
+    $ores = function (&$data, $i) use ($http_request, $db_name) {
+        $db_name_nosuffix = $db_name;
+        // endsWith "_p"
+        if ($db_name_nosuffix && substr($db_name_nosuffix, -2) === "_p") {
+            $db_name_nosuffix = str_ireplace("_p", "", $db_name_nosuffix);
+        }
+
+
         $url = "https://ores.wikimedia.org/v3/scores/idwiki/?models=reverted&revids=";
         $cnt = 0;
         $limit = 100;
@@ -158,9 +172,12 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
             }
         }
 
+        if (count($check) <= 0) {
+            return;
+        }
 
-        $ores_result = json_decode(http_request($url . implode("|", $check)), true);
-        $ores_result = $ores_result['idwiki']['scores'];
+        $ores_result = json_decode($http_request($url . implode("|", $check)), true);
+        $ores_result = $ores_result[$db_name_nosuffix]['scores'];
 
         $cnt = 0;
         foreach ($data as &$row) {
@@ -182,11 +199,11 @@ $this->respond('GET', '/[s:date]/[i:page_num]', function ($request, $response, $
         }
 
         return $more;
-    }
+    };
     $x = -1;
     do {
         $x++;
-    } while (ores($data, $x));
+    } while ($ores($data, $x));
 
     // https://id.wikipedia.org/w/api.php?action=sitematrix
 
